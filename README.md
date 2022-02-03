@@ -104,7 +104,7 @@ use std::str::FromStr;
 use iso_8601::{DateTime, Date, GlobalTime};
 
 fn main() {
-    #[cfg(feature = "chrono")]
+    #[cfg(feature = "chrono-serde")]
     assert_eq!(
         chrono::DateTime::<chrono::Utc>::from(
             DateTime::<Date, GlobalTime>::from_str("2018-08-02T13:42:02Z").unwrap()
