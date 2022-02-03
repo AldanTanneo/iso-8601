@@ -1,0 +1,18 @@
+[package]
+name = "iso-8601"
+version = "0.4.2"
+authors = ["Robin Stumm <serverkorken@gmail.com>", "AldanTanneo <aldantanneo@gmail.com>"]
+description = "Fully compliant ISO 8601 parser."
+repository = "https://hg.sr.ht/~dermetfan/iso-8601"
+keywords = ["iso8601"]
+categories = ["parser-implementations", "date-and-time"]
+license = "Apache-2.0"
+edition = "2021"
+
+[features]
+chrono-serde = ["chrono/serde", "serde"]
+
+[dependencies]
+nom = { version = "~6.2.1", features = ["regexp"] }
+chrono = { version = "0.4", optional = true }
+serde = { version = "1.0", optional = true }
