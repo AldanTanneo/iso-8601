@@ -1,5 +1,6 @@
-## Fork from https://hg.sr.ht/~dermetfan/iso-8601
+![build](https://github.com/AldanTanneo/iso-8601/workflows/Rust/badge.svg)
 
+## Fork from https://hg.sr.ht/~dermetfan/iso-8601
 # Fully Compliant ISO 8601 Parser
 
 The go-to library for all your date and time parsing needs.
