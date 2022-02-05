@@ -13,6 +13,8 @@ edition = "2021"
 chrono-serde = ["chrono/serde", "serde"]
 
 [dependencies]
-nom = { version = "~6.2.1", features = ["regexp"] }
+nom = "7.1"
+nom-regex = "0.2"
+lazy_static = "1.4"
 chrono = { version = "0.4", optional = true }
 serde = { version = "1.0", optional = true }

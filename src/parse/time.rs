@@ -1,120 +1,152 @@
 use super::*;
 use crate::time::*;
-use nom::character::is_digit;
+use nom::{
+    branch::alt,
+    bytes::complete::take_while_m_n,
+    character::complete::char,
+    character::is_digit,
+    combinator::{complete, cond, map, opt},
+    sequence::{pair, preceded, separated_pair, tuple},
+};
 
-named!(hour<u8>, map!(take_while_m_n!(2, 2, is_digit), buf_to_int));
+fn hour(i: &[u8]) -> ParseResult<u8> {
+    map(take_while_m_n(2, 2, is_digit), buf_to_int)(i)
+}
 
-named!(
-    minute<u8>,
-    map!(take_while_m_n!(2, 2, is_digit), buf_to_int)
-);
+fn minute(i: &[u8]) -> ParseResult<u8> {
+    map(take_while_m_n(2, 2, is_digit), buf_to_int)(i)
+}
 
-named!(
-    second<u8>,
-    map!(take_while_m_n!(2, 2, is_digit), buf_to_int)
-);
+fn second(i: &[u8]) -> ParseResult<u8> {
+    map(take_while_m_n(2, 2, is_digit), buf_to_int)(i)
+}
 
-named_args!(time_hms_format(extended: bool) <HmsTime>, do_parse!(
-    hour: hour >>
-    cond!(extended, char!(':')) >>
-    minute: minute >>
-    cond!(extended, char!(':')) >>
-    second: second >>
-    (HmsTime { hour, minute, second })
-));
-named!(time_hms_basic<HmsTime>, call!(time_hms_format, false));
-named!(time_hms_extended<HmsTime>, call!(time_hms_format, true));
+fn time_hms_format(i: &[u8], extended: bool) -> ParseResult<HmsTime> {
+    map(
+        tuple((
+            hour,
+            cond(extended, char(':')),
+            minute,
+            cond(extended, char(':')),
+            second,
+        )),
+        |(hour, _, minute, _, second)| HmsTime {
+            hour,
+            minute,
+            second,
+        },
+    )(i)
+}
 
-named!(pub time_hms <HmsTime>, alt!(
-    time_hms_extended |
-    time_hms_basic
-));
+fn time_hms_basic(i: &[u8]) -> ParseResult<HmsTime> {
+    time_hms_format(i, false)
+}
 
-named_args!(time_hm_format(extended: bool) <HmTime>, do_parse!(
-    hour: hour >>
-    cond!(extended, char!(':')) >>
-    minute: minute >>
-    (HmTime { hour, minute })
-));
-named!(time_hm_basic<HmTime>, call!(time_hm_format, false));
-named!(time_hm_extended<HmTime>, call!(time_hm_format, true));
+fn time_hms_extended(i: &[u8]) -> ParseResult<HmsTime> {
+    time_hms_format(i, true)
+}
 
-named!(pub time_hm <HmTime>, alt!(
-    time_hm_extended |
-    time_hm_basic
-));
+pub fn time_hms(i: &[u8]) -> ParseResult<HmsTime> {
+    alt((time_hms_extended, time_hms_basic))(i)
+}
 
-named!(pub time_h <HTime>, map!(hour, |hour| HTime { hour }));
+fn time_hm_format(i: &[u8], extended: bool) -> ParseResult<HmTime> {
+    map(
+        separated_pair(hour, cond(extended, char(':')), minute),
+        |(hour, minute)| HmTime { hour, minute },
+    )(i)
+}
 
-named!(
-    time_naive_approx<ApproxNaiveTime>,
-    alt!(
-        complete!(map!(time_hms, ApproxNaiveTime::HMS))
-            | complete!(map!(time_hm, ApproxNaiveTime::HM))
-            | complete!(map!(time_h, ApproxNaiveTime::H))
-    )
-);
+fn time_hm_basic(i: &[u8]) -> ParseResult<HmTime> {
+    time_hm_format(i, false)
+}
 
-named!(pub time_local_approx <ApproxLocalTime>, do_parse!(
-    naive: time_naive_approx >>
-    fraction: opt!(complete!(frac32)) >>
-    (match naive {
-        ApproxNaiveTime::HMS(naive) => ApproxLocalTime::HMS(LocalTime {
-            naive,
-            fraction: fraction.unwrap_or(0.)
-        }),
-        ApproxNaiveTime::HM(naive) => ApproxLocalTime::HM(LocalTime {
-            naive,
-            fraction: fraction.unwrap_or(0.)
-        }),
-        ApproxNaiveTime::H(naive) => ApproxLocalTime::H(LocalTime {
-            naive,
-            fraction: fraction.unwrap_or(0.)
-        })
-    })
-));
+fn time_hm_extended(i: &[u8]) -> ParseResult<HmTime> {
+    time_hm_format(i, true)
+}
 
-named!(pub time_global_approx <ApproxGlobalTime>, do_parse!(
-    local: time_local_approx >>
-    timezone: timezone >>
-    (match local {
-        ApproxLocalTime::HMS(local) => ApproxGlobalTime::HMS(GlobalTime { local, timezone }),
-        ApproxLocalTime::HM (local) => ApproxGlobalTime::HM (GlobalTime { local, timezone }),
-        ApproxLocalTime::H  (local) => ApproxGlobalTime::H  (GlobalTime { local, timezone })
-    })
-));
+pub fn time_hm(i: &[u8]) -> ParseResult<HmTime> {
+    alt((time_hm_extended, time_hm_basic))(i)
+}
 
-named!(pub time_any_approx <ApproxAnyTime>, alt!(
-    map!(time_any_hms, ApproxAnyTime::HMS) |
-    map!(time_any_hm,  ApproxAnyTime::HM) |
-    map!(time_any_h,   ApproxAnyTime::H)
-));
+pub fn time_h(i: &[u8]) -> ParseResult<HTime> {
+    map(hour, |hour| HTime { hour })(i)
+}
+
+fn time_naive_approx(i: &[u8]) -> ParseResult<ApproxNaiveTime> {
+    alt((
+        complete(map(time_hms, ApproxNaiveTime::HMS)),
+        complete(map(time_hm, ApproxNaiveTime::HM)),
+        complete(map(time_h, ApproxNaiveTime::H)),
+    ))(i)
+}
+
+pub fn time_local_approx(i: &[u8]) -> ParseResult<ApproxLocalTime> {
+    map(
+        pair(time_naive_approx, opt(complete(frac32))),
+        |(naive, fraction)| match naive {
+            ApproxNaiveTime::HMS(naive) => ApproxLocalTime::HMS(LocalTime {
+                naive,
+                fraction: fraction.unwrap_or(0.),
+            }),
+            ApproxNaiveTime::HM(naive) => ApproxLocalTime::HM(LocalTime {
+                naive,
+                fraction: fraction.unwrap_or(0.),
+            }),
+            ApproxNaiveTime::H(naive) => ApproxLocalTime::H(LocalTime {
+                naive,
+                fraction: fraction.unwrap_or(0.),
+            }),
+        },
+    )(i)
+}
+
+pub fn time_global_approx(i: &[u8]) -> ParseResult<ApproxGlobalTime> {
+    map(
+        pair(time_local_approx, timezone),
+        |(local, timezone)| match local {
+            ApproxLocalTime::HMS(local) => ApproxGlobalTime::HMS(GlobalTime { local, timezone }),
+            ApproxLocalTime::HM(local) => ApproxGlobalTime::HM(GlobalTime { local, timezone }),
+            ApproxLocalTime::H(local) => ApproxGlobalTime::H(GlobalTime { local, timezone }),
+        },
+    )(i)
+}
+
+pub fn time_any_approx(i: &[u8]) -> ParseResult<ApproxAnyTime> {
+    alt((
+        map(time_any_hms, ApproxAnyTime::HMS),
+        map(time_any_hm, ApproxAnyTime::HM),
+        map(time_any_h, ApproxAnyTime::H),
+    ))(i)
+}
 
 macro_rules! time_local_accuracy {
     (pub $name:ident, $naive:ty, $naive_submac:ident) => {
-        named!(pub $name <LocalTime<$naive>>, do_parse!(
-            opt!(char!('T')) >>
-            naive: $naive_submac >>
-            fraction: opt!(complete!(frac32)) >>
-            (LocalTime {
-                naive,
-                fraction: fraction.unwrap_or(0.)
-            })
-        ));
-    }
+        pub fn $name(i: &[u8]) -> ParseResult<LocalTime<$naive>> {
+            map(
+                tuple((opt(char('T')), $naive_submac, opt(complete(frac32)))),
+                |(_, naive, fraction)| LocalTime {
+                    naive,
+                    fraction: fraction.unwrap_or(0.),
+                },
+            )(i)
+        }
+    };
 }
+
 time_local_accuracy!(pub time_local_hms, HmsTime, time_hms);
 time_local_accuracy!(pub time_local_hm,  HmTime,  time_hm);
 time_local_accuracy!(pub time_local_h,   HTime,   time_h);
 
 macro_rules! time_global_accuracy {
     (pub $name:ident, $naive:ty, $local_submac:ident) => {
-        named!(pub $name <GlobalTime<$naive>>, do_parse!(
-            local: $local_submac >>
-            timezone: complete!(timezone) >>
-            (GlobalTime { local, timezone })
-        ));
-    }
+        pub fn $name(i: &[u8]) -> ParseResult<GlobalTime<$naive>> {
+            map(
+                pair($local_submac, complete(timezone)),
+                |(local, timezone)| GlobalTime { local, timezone },
+            )(i)
+        }
+    };
 }
 time_global_accuracy!(pub time_global_hms, HmsTime, time_local_hms);
 time_global_accuracy!(pub time_global_hm,  HmTime,  time_local_hm);
@@ -122,32 +154,32 @@ time_global_accuracy!(pub time_global_h,   HTime,   time_local_h);
 
 macro_rules! time_any_accuracy {
     (pub $name:ident, $naive:ty, $local_submac:ident, $global_submac:ident) => {
-        named!(pub $name <AnyTime<$naive>>, alt!(
-            complete!(map!($global_submac, AnyTime::Global)) |
-            complete!(map!($local_submac, AnyTime::Local))
-        ));
-    }
+        pub fn $name(i: &[u8]) -> ParseResult<AnyTime<$naive>> {
+            alt((
+                complete(map($global_submac, AnyTime::Global)),
+                complete(map($local_submac, AnyTime::Local)),
+            ))(i)
+        }
+    };
 }
 time_any_accuracy!(pub time_any_hms, HmsTime, time_local_hms, time_global_hms);
 time_any_accuracy!(pub time_any_hm,  HmTime,  time_local_hm,  time_global_hm);
 time_any_accuracy!(pub time_any_h,   HTime,   time_local_h,   time_global_h);
 
-named!(timezone_utc<i16>, map!(char!('Z'), |_| 0));
+fn timezone_utc(i: &[u8]) -> ParseResult<i16> {
+    map(char('Z'), |_| 0)(i)
+}
 
-named!(
-    timezone_fixed<i16>,
-    do_parse!(
-        sign: sign
-            >> hour: hour
-            >> minute:
-                opt!(complete!(do_parse!(
-                    opt!(char!(':')) >> minute: minute >> (minute)
-                )))
-            >> (sign as i16 * (hour as i16 * 60 + minute.unwrap_or(0) as i16))
-    )
-);
+fn timezone_fixed(i: &[u8]) -> ParseResult<i16> {
+    map(
+        tuple((sign, hour, opt(complete(preceded(opt(char(':')), minute))))),
+        |(sign, hour, minute)| sign as i16 * (hour as i16 * 60 + minute.unwrap_or(0) as i16),
+    )(i)
+}
 
-named!(timezone<i16>, alt!(timezone_utc | timezone_fixed));
+fn timezone(i: &[u8]) -> ParseResult<i16> {
+    alt((timezone_utc, timezone_fixed))(i)
+}
 
 #[cfg(test)]
 mod tests {
