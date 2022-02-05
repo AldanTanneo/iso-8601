@@ -360,7 +360,7 @@ where
     fn from(date: ODate<Y>) -> Self {
         let leap = date.year.is_leap();
         let (month, day) = match date.day {
-            1..=31 => (1, date.day - 0),
+            1..=31 => (1, date.day),
             32..=60 if leap => (2, date.day - 31),
             32..=59 => (2, date.day - 31),
             61..=91 if leap => (3, date.day - 60),
@@ -383,7 +383,7 @@ where
             305..=334 => (11, date.day - 304),
             336..=366 if leap => (12, date.day - 335),
             335..=365 => (12, date.day - 334),
-            day @ _ => panic!("invalid day: {:?}", day),
+            day => panic!("invalid day: {:?}", day),
         };
 
         Self {
@@ -498,7 +498,7 @@ where
                 11 => 304,
                 12 if leap => 335,
                 12 => 334,
-                month @ _ => panic!("invalid month: {:?}", month),
+                month => panic!("invalid month: {:?}", month),
             } + date.day as u16,
         }
     }
