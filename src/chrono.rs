@@ -17,30 +17,35 @@ impl From<crate::DateTime<crate::Date, crate::GlobalTime>> for DateTime<FixedOff
 }
 
 impl From<crate::DateTime<crate::Date, crate::GlobalTime>> for DateTime<Utc> {
+    #[inline]
     fn from(dt: crate::DateTime<crate::Date, crate::GlobalTime>) -> Self {
         DateTime::<FixedOffset>::from(dt).with_timezone(&Utc)
     }
 }
 
 impl From<crate::DateTime<crate::Date, crate::GlobalTime>> for DateTime<Local> {
+    #[inline]
     fn from(dt: crate::DateTime<crate::Date, crate::GlobalTime>) -> Self {
         DateTime::<FixedOffset>::from(dt).with_timezone(&Local)
     }
 }
 
 impl From<crate::DateTime<crate::Date, crate::LocalTime>> for DateTime<FixedOffset> {
+    #[inline]
     fn from(dt: crate::DateTime<crate::Date, crate::LocalTime>) -> Self {
         DateTime::<Local>::from(dt).with_timezone(&Utc.fix())
     }
 }
 
 impl From<crate::DateTime<crate::Date, crate::LocalTime>> for DateTime<Utc> {
+    #[inline]
     fn from(dt: crate::DateTime<crate::Date, crate::LocalTime>) -> Self {
         DateTime::<Local>::from(dt).with_timezone(&Utc)
     }
 }
 
 impl From<crate::DateTime<crate::Date, crate::LocalTime>> for DateTime<Local> {
+    #[inline]
     fn from(dt: crate::DateTime<crate::Date, crate::LocalTime>) -> Self {
         let date: crate::YmdDate = dt.date.into();
 
@@ -55,23 +60,27 @@ impl From<crate::DateTime<crate::Date, crate::LocalTime>> for DateTime<Local> {
                     ),
             )
             .single()
-            .unwrap()
+            .unwrap() // Impossible to panic because of how
+                      // Local::from_local_datetime is implemented
     }
 }
 
 impl From<crate::DateTime<crate::Date, crate::AnyTime>> for DateTime<FixedOffset> {
+    #[inline]
     fn from(dt: crate::DateTime<crate::Date, crate::AnyTime>) -> Self {
         DateTime::<Local>::from(dt).with_timezone(&Utc.fix())
     }
 }
 
 impl From<crate::DateTime<crate::Date, crate::AnyTime>> for DateTime<Utc> {
+    #[inline]
     fn from(dt: crate::DateTime<crate::Date, crate::AnyTime>) -> Self {
         DateTime::<Local>::from(dt).with_timezone(&Utc)
     }
 }
 
 impl From<crate::DateTime<crate::Date, crate::AnyTime>> for DateTime<Local> {
+    #[inline]
     fn from(dt: crate::DateTime<crate::Date, crate::AnyTime>) -> Self {
         match dt.time {
             crate::AnyTime::Global(time) => crate::DateTime {
@@ -89,6 +98,7 @@ impl From<crate::DateTime<crate::Date, crate::AnyTime>> for DateTime<Local> {
 }
 
 impl From<crate::DateTime<crate::ApproxDate, crate::ApproxGlobalTime>> for DateTime<FixedOffset> {
+    #[inline]
     fn from(dt: crate::DateTime<crate::ApproxDate, crate::ApproxGlobalTime>) -> Self {
         let date: crate::Date = dt.date.into();
         let time: crate::GlobalTime<crate::HmsTime> = dt.time.into();
@@ -97,6 +107,7 @@ impl From<crate::DateTime<crate::ApproxDate, crate::ApproxGlobalTime>> for DateT
 }
 
 impl From<crate::DateTime<crate::ApproxDate, crate::ApproxGlobalTime>> for DateTime<Utc> {
+    #[inline]
     fn from(dt: crate::DateTime<crate::ApproxDate, crate::ApproxGlobalTime>) -> Self {
         DateTime::<FixedOffset>::from(dt).with_timezone(&Utc)
     }
