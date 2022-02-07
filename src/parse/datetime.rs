@@ -1,17 +1,12 @@
-#![allow(unused_imports)]
-
 use super::*;
 use crate::{date::*, datetime::*, time::*};
 
 use nom::{
     character::complete::char,
     combinator::{complete, cond, map, map_res, not, opt, peek},
-    error::Error,
     sequence::tuple,
-    IResult,
+    FindToken,
 };
-
-use nom_regex::bytes::re_match;
 
 macro_rules! datetime {
     (pub $name:ident, $date:ty, $date_parser:ident, $time:ty, $time_parser:ident) => {
@@ -53,18 +48,18 @@ datetime!(pub datetime_approx_any_approx,    ApproxDate, date_approx, ApproxAnyT
 pub fn partial_datetime_approx_any_approx(
     i: &[u8],
 ) -> ParseResult<PartialDateTime<ApproxDate, ApproxAnyTime>> {
-    use nom_regex::lib::regex::bytes::Regex;
-    lazy_static::lazy_static! {
-        static ref RE: Regex = Regex::new("^(.+T.*|[^T:]*)$").expect("Could not compile regex");
-    }
     map_res(
         tuple((
-            opt(preceded(peek(re_match(RE.clone())), date_approx)),
+            cond(
+                (!i.is_empty() && (&i[1..]).find_token('T'))
+                    || (i.get(0) != Some(&b'T') && !i.find_token(':')),
+                opt(date_approx),
+            ),
             opt(complete(char('T'))),
             opt(complete(peek(not(char('T'))))),
             opt(time_any_approx),
         )),
-        |(d, _, _, time)| match (d, time) {
+        |(d, _, _, time)| match (d.flatten(), time) {
             (None, None) => Err(nom::Err::<&[u8]>::Incomplete(nom::Needed::Unknown)),
             (Some(date), None) => Ok(PartialDateTime::Date(date)),
             (None, Some(time)) => Ok(PartialDateTime::Time(time)),
