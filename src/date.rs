@@ -612,7 +612,7 @@ impl<Y: Year + From<i16>> From<ApproxDate<Y>> for Date<Y> {
             ApproxDate::Y(d) => Date::YMD(d.into()),
             ApproxDate::C(d) => Date::YMD(
                 YDate {
-                    year: Y::from(d.century as i16 * 100),
+                    year: Y::from(d.century as i16 * 100 + 1),
                 }
                 .into(),
             ),
