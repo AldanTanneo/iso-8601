@@ -570,6 +570,56 @@ macro_rules! impl_o_from_wd {
 }
 impl_years!(impl_o_from_wd);
 
+impl<Y: Year> From<YmDate<Y>> for YmdDate<Y> {
+    fn from(date: YmDate<Y>) -> Self {
+        Self {
+            year: date.year,
+            month: date.month,
+            day: 1,
+        }
+    }
+}
+
+impl<Y: Year> From<WDate<Y>> for WdDate<Y> {
+    fn from(date: WDate<Y>) -> Self {
+        Self {
+            year: date.year,
+            week: date.week,
+            day: 1,
+        }
+    }
+}
+
+impl<Y: Year> From<YDate<Y>> for YmdDate<Y> {
+    fn from(date: YDate<Y>) -> Self {
+        Self {
+            year: date.year,
+            month: 1,
+            day: 1,
+        }
+    }
+}
+
+impl<Y: Year + From<i16>> From<ApproxDate<Y>> for Date<Y> {
+    #[inline]
+    fn from(date: ApproxDate<Y>) -> Self {
+        match date {
+            ApproxDate::YMD(d) => Date::YMD(d),
+            ApproxDate::WD(d) => Date::WD(d),
+            ApproxDate::O(d) => Date::O(d),
+            ApproxDate::YM(d) => Date::YMD(d.into()),
+            ApproxDate::W(d) => Date::WD(d.into()),
+            ApproxDate::Y(d) => Date::YMD(d.into()),
+            ApproxDate::C(d) => Date::YMD(
+                YDate {
+                    year: Y::from(d.century as i16 * 100),
+                }
+                .into(),
+            ),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,7 +1,7 @@
 use crate::Valid;
 
 /// Local time (4.2.2.2)
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub struct HmsTime {
     pub hour: u8,
     pub minute: u8,
@@ -9,16 +9,34 @@ pub struct HmsTime {
 }
 
 /// A specific hour and minute (4.2.2.3a)
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub struct HmTime {
     pub hour: u8,
     pub minute: u8,
 }
 
 /// A specific hour (4.2.2.3b)
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub struct HTime {
     pub hour: u8,
+}
+
+impl From<HTime> for HmTime {
+    #[inline]
+    fn from(HTime { hour }: HTime) -> Self {
+        Self { hour, minute: 0 }
+    }
+}
+
+impl From<HmTime> for HmsTime {
+    #[inline]
+    fn from(HmTime { hour, minute }: HmTime) -> Self {
+        Self {
+            hour,
+            minute,
+            second: 0,
+        }
+    }
 }
 
 /// Local time with decimal fraction (4.2.2.4)
@@ -72,7 +90,7 @@ impl LocalTime<HmTime> {
 
     #[inline]
     pub fn nanosecond(&self) -> u32 {
-        (self.fraction * 1_000_000_000.) as u32 % 1_000_000_000
+        (self.fraction * 60_000_000_000.) as u32 % 1_000_000_000
     }
 }
 
@@ -84,12 +102,12 @@ impl LocalTime<HTime> {
 
     #[inline]
     pub fn second(&self) -> u8 {
-        (self.fraction * 60.) as u8 % 60
+        (self.fraction * 3_600.) as u8 % 60
     }
 
     #[inline]
     pub fn nanosecond(&self) -> u32 {
-        (self.fraction * 1_000_000_000.) as u32 % 1_000_000_000
+        (self.fraction * 3_600_000_000_000.) as u32 % 1_000_000_000
     }
 }
 
@@ -149,14 +167,14 @@ impl Valid for HmsTime {
     /// since they are not predictable.
     #[inline]
     fn is_valid(&self) -> bool {
-        HmTime::from(self.clone()).is_valid() && self.second <= 60
+        HmTime::from(*self).is_valid() && self.second <= 60
     }
 }
 
 impl Valid for HmTime {
     #[inline]
     fn is_valid(&self) -> bool {
-        HTime::from(self.clone()).is_valid() && self.minute <= 59
+        HTime::from(*self).is_valid() && self.minute <= 59
     }
 }
 
@@ -173,7 +191,7 @@ where
 {
     #[inline]
     fn is_valid(&self) -> bool {
-        self.naive.is_valid() && self.fraction < 1.
+        self.naive.is_valid() && self.fraction >= 0. && self.fraction < 1.
     }
 }
 
@@ -257,6 +275,17 @@ impl From<HmTime> for HTime {
     }
 }
 
+impl From<HTime> for HmsTime {
+    #[inline]
+    fn from(t: HTime) -> Self {
+        Self {
+            hour: t.hour,
+            minute: 0,
+            second: 0,
+        }
+    }
+}
+
 impl From<LocalTime<HmsTime>> for LocalTime<HmTime> {
     #[inline]
     fn from(t: LocalTime<HmsTime>) -> Self {
@@ -265,7 +294,7 @@ impl From<LocalTime<HmsTime>> for LocalTime<HmTime> {
                 hour: t.naive.hour,
                 minute: t.naive.minute,
             },
-            fraction: t.fraction,
+            fraction: (t.naive.second as f32 + t.fraction) / 60.,
         }
     }
 }
@@ -275,7 +304,7 @@ impl From<LocalTime<HmsTime>> for LocalTime<HTime> {
     fn from(t: LocalTime<HmsTime>) -> Self {
         Self {
             naive: HTime { hour: t.naive.hour },
-            fraction: t.fraction,
+            fraction: t.naive.minute as f32 / 60. + (t.naive.second as f32 + t.fraction) / 3_600.,
         }
     }
 }
@@ -285,7 +314,35 @@ impl From<LocalTime<HmTime>> for LocalTime<HTime> {
     fn from(t: LocalTime<HmTime>) -> Self {
         Self {
             naive: HTime { hour: t.naive.hour },
-            fraction: t.fraction,
+            fraction: (t.naive.minute as f32 + t.fraction) / 60.,
+        }
+    }
+}
+
+impl From<LocalTime<HmTime>> for LocalTime<HmsTime> {
+    #[inline]
+    fn from(t: LocalTime<HmTime>) -> Self {
+        Self {
+            naive: HmsTime {
+                hour: t.naive.hour,
+                minute: t.naive.minute,
+                second: t.second(),
+            },
+            fraction: (t.fraction * 60.) % 1.,
+        }
+    }
+}
+
+impl From<LocalTime<HTime>> for LocalTime<HmsTime> {
+    #[inline]
+    fn from(t: LocalTime<HTime>) -> Self {
+        Self {
+            naive: HmsTime {
+                hour: t.naive.hour,
+                minute: t.minute(),
+                second: t.second(),
+            },
+            fraction: (t.fraction * 3600.) % 1.,
         }
     }
 }
@@ -294,13 +351,7 @@ impl From<GlobalTime<HmsTime>> for GlobalTime<HmTime> {
     #[inline]
     fn from(t: GlobalTime<HmsTime>) -> Self {
         Self {
-            local: LocalTime {
-                naive: HmTime {
-                    hour: t.local.naive.hour,
-                    minute: t.local.naive.minute,
-                },
-                fraction: t.local.fraction,
-            },
+            local: t.local.into(),
             timezone: t.timezone,
         }
     }
@@ -310,12 +361,7 @@ impl From<GlobalTime<HmsTime>> for GlobalTime<HTime> {
     #[inline]
     fn from(t: GlobalTime<HmsTime>) -> Self {
         Self {
-            local: LocalTime {
-                naive: HTime {
-                    hour: t.local.naive.hour,
-                },
-                fraction: t.local.fraction,
-            },
+            local: t.local.into(),
             timezone: t.timezone,
         }
     }
@@ -325,12 +371,27 @@ impl From<GlobalTime<HmTime>> for GlobalTime<HTime> {
     #[inline]
     fn from(t: GlobalTime<HmTime>) -> Self {
         Self {
-            local: LocalTime {
-                naive: HTime {
-                    hour: t.local.naive.hour,
-                },
-                fraction: t.local.fraction,
-            },
+            local: t.local.into(),
+            timezone: t.timezone,
+        }
+    }
+}
+
+impl From<GlobalTime<HmTime>> for GlobalTime<HmsTime> {
+    #[inline]
+    fn from(t: GlobalTime<HmTime>) -> Self {
+        Self {
+            local: t.local.into(),
+            timezone: t.timezone,
+        }
+    }
+}
+
+impl From<GlobalTime<HTime>> for GlobalTime<HmsTime> {
+    #[inline]
+    fn from(t: GlobalTime<HTime>) -> Self {
+        Self {
+            local: t.local.into(),
             timezone: t.timezone,
         }
     }
@@ -362,6 +423,39 @@ impl From<AnyTime<HmTime>> for AnyTime<HTime> {
         match t {
             AnyTime::Global(t) => AnyTime::Global(t.into()),
             AnyTime::Local(t) => AnyTime::Local(t.into()),
+        }
+    }
+}
+
+impl From<ApproxNaiveTime> for HmsTime {
+    #[inline]
+    fn from(t: ApproxNaiveTime) -> Self {
+        match t {
+            ApproxNaiveTime::HMS(t) => t,
+            ApproxNaiveTime::HM(t) => t.into(),
+            ApproxNaiveTime::H(t) => t.into(),
+        }
+    }
+}
+
+impl From<ApproxLocalTime> for LocalTime<HmsTime> {
+    #[inline]
+    fn from(t: ApproxLocalTime) -> Self {
+        match t {
+            ApproxLocalTime::HMS(t) => t,
+            ApproxLocalTime::HM(t) => t.into(),
+            ApproxLocalTime::H(t) => t.into(),
+        }
+    }
+}
+
+impl From<ApproxGlobalTime> for GlobalTime<HmsTime> {
+    #[inline]
+    fn from(t: ApproxGlobalTime) -> Self {
+        match t {
+            ApproxGlobalTime::HMS(t) => t,
+            ApproxGlobalTime::HM(t) => t.into(),
+            ApproxGlobalTime::H(t) => t.into(),
         }
     }
 }
