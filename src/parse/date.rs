@@ -210,7 +210,7 @@ pub fn date_c(i: &[u8]) -> ParseResult<CDate> {
 #[inline]
 pub fn date_approx(i: &[u8]) -> ParseResult<ApproxDate> {
     alt((
-        map(date, |x| x.into()),
+        map(date, Into::into),
         map(date_w, ApproxDate::W),
         map(date_ym, ApproxDate::YM),
         map(date_y, ApproxDate::Y),
