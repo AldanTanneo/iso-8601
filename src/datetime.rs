@@ -10,6 +10,8 @@ where
     pub time: T,
 }
 
+impl<D: Copy + Datelike, T: Copy + Timelike> Copy for DateTime<D, T> {}
+
 impl_fromstr_parse!(DateTime<Date,       GlobalTime<HmsTime>>, datetime_global_hms);
 impl_fromstr_parse!(DateTime<Date,       GlobalTime<HmTime>>,  datetime_global_hm);
 impl_fromstr_parse!(DateTime<Date,       GlobalTime<HTime>>,   datetime_global_h);
@@ -56,6 +58,8 @@ where
     Time(T),
     DateTime(DateTime<D, T>),
 }
+
+impl<D: Copy + Datelike, T: Copy + Timelike> Copy for PartialDateTime<D, T> {}
 
 impl<D, T> Valid for PartialDateTime<D, T>
 where

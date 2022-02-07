@@ -1,7 +1,7 @@
 use {crate::Valid, std::convert::From};
 
 /// Complete date representations
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum Date<Y: Year = i16> {
     YMD(YmdDate<Y>),
     WD(WdDate<Y>),
@@ -9,7 +9,7 @@ pub enum Date<Y: Year = i16> {
 }
 
 /// Date representations with reduced accuracy
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum ApproxDate<Y: Year = i16> {
     YMD(YmdDate<Y>),
     YM(YmDate<Y>),
@@ -21,7 +21,7 @@ pub enum ApproxDate<Y: Year = i16> {
 }
 
 /// Calendar date (4.1.2.2)
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub struct YmdDate<Y: Year = i16> {
     pub year: Y,
     pub month: u8,
@@ -29,27 +29,27 @@ pub struct YmdDate<Y: Year = i16> {
 }
 
 /// A specific month (4.1.2.3a)
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub struct YmDate<Y: Year = i16> {
     pub year: Y,
     pub month: u8,
 }
 
 /// A specific year (4.1.2.3b)
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub struct YDate<Y: Year = i16> {
     pub year: Y,
 }
 
 // TODO support expanded century
 /// A specific century (4.1.2.3c)
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub struct CDate {
     pub century: i8,
 }
 
 /// Week date (4.1.4.2)
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub struct WdDate<Y: Year = i16> {
     pub year: Y,
     pub week: u8,
@@ -57,14 +57,14 @@ pub struct WdDate<Y: Year = i16> {
 }
 
 /// A specific week (4.1.4.3)
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub struct WDate<Y: Year = i16> {
     pub year: Y,
     pub week: u8,
 }
 
 /// Ordinal date (4.1.3)
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub struct ODate<Y: Year = i16> {
     pub year: Y,
     pub day: u16,

@@ -49,6 +49,8 @@ where
     pub fraction: f32,
 }
 
+impl<N: NaiveTime + Copy> Copy for LocalTime<N> {}
+
 /// Local time with timezone (4.2.4)
 #[derive(PartialEq, Clone, Debug)]
 pub struct GlobalTime<N = HmsTime>
@@ -60,6 +62,8 @@ where
     pub timezone: i16,
 }
 
+impl<N: NaiveTime + Copy> Copy for GlobalTime<N> {}
+
 #[derive(PartialEq, Clone, Debug)]
 pub enum AnyTime<N = HmsTime>
 where
@@ -68,6 +72,8 @@ where
     Global(GlobalTime<N>),
     Local(LocalTime<N>),
 }
+
+impl<N: NaiveTime + Copy> Copy for AnyTime<N> {}
 
 pub trait NaiveTime {}
 
@@ -111,28 +117,28 @@ impl LocalTime<HTime> {
     }
 }
 
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Debug)]
 pub enum ApproxNaiveTime {
     HMS(HmsTime),
     HM(HmTime),
     H(HTime),
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum ApproxLocalTime {
     HMS(LocalTime<HmsTime>),
     HM(LocalTime<HmTime>),
     H(LocalTime<HTime>),
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum ApproxGlobalTime {
     HMS(GlobalTime<HmsTime>),
     HM(GlobalTime<HmTime>),
     H(GlobalTime<HTime>),
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum ApproxAnyTime {
     HMS(AnyTime<HmsTime>),
     HM(AnyTime<HmTime>),
