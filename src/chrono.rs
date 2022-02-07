@@ -88,6 +88,20 @@ impl From<crate::DateTime<crate::Date, crate::AnyTime>> for DateTime<Local> {
     }
 }
 
+impl From<crate::DateTime<crate::ApproxDate, crate::ApproxGlobalTime>> for DateTime<FixedOffset> {
+    fn from(dt: crate::DateTime<crate::ApproxDate, crate::ApproxGlobalTime>) -> Self {
+        let date: crate::Date = dt.date.into();
+        let time: crate::GlobalTime<crate::HmsTime> = dt.time.into();
+        crate::DateTime { date, time }.into()
+    }
+}
+
+impl From<crate::DateTime<crate::ApproxDate, crate::ApproxGlobalTime>> for DateTime<Utc> {
+    fn from(dt: crate::DateTime<crate::ApproxDate, crate::ApproxGlobalTime>) -> Self {
+        DateTime::<FixedOffset>::from(dt).with_timezone(&Utc)
+    }
+}
+
 #[cfg(feature = "chrono-serde")]
 pub mod serde {
     use super::{DateTime, TimeZone};
