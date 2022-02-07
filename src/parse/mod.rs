@@ -15,8 +15,9 @@ use nom::{
 };
 use std::ops::{AddAssign, MulAssign};
 
-pub(crate) type ParseResult<'a, T> = nom::IResult<&'a [u8], T, nom::error::Error<&'a [u8]>>;
+pub(crate) type ParseResult<'a, T> = nom::IResult<&'a [u8], T>;
 
+#[inline]
 fn buf_to_int<T>(buf: &[u8]) -> T
 where
     T: AddAssign + MulAssign + From<u8>,
@@ -29,22 +30,15 @@ where
     sum
 }
 
+#[inline]
 fn sign(i: &[u8]) -> ParseResult<i8> {
     alt((
         map(one_of("-\u{2212}\u{2010}"), |_| -1),
         map(char('+'), |_| 1),
     ))(i)
 }
-/*
-named!(
-    frac32<f32>,
-    do_parse!(
-        peek!(char!('.'))
-            >> fraction: flat_map!(nom::number::complete::recognize_float, parse_to!(f32))
-            >> (fraction)
-    )
-); */
 
+#[inline]
 fn frac32(i: &[u8]) -> ParseResult<f32> {
     preceded(peek(char('.')), map_parser(recognize_float, float))(i)
 }

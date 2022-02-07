@@ -58,30 +58,36 @@ impl NaiveTime for HmTime {}
 impl NaiveTime for HTime {}
 
 impl LocalTime<HmsTime> {
+    #[inline]
     pub fn nanosecond(&self) -> u32 {
         (self.fraction * 1_000_000_000.) as u32
     }
 }
 
 impl LocalTime<HmTime> {
+    #[inline]
     pub fn second(&self) -> u8 {
         (self.fraction * 60.) as u8
     }
 
+    #[inline]
     pub fn nanosecond(&self) -> u32 {
         (self.fraction * 1_000_000_000.) as u32 % 1_000_000_000
     }
 }
 
 impl LocalTime<HTime> {
+    #[inline]
     pub fn minute(&self) -> u8 {
         (self.fraction * 60.) as u8
     }
 
+    #[inline]
     pub fn second(&self) -> u8 {
         (self.fraction * 60.) as u8 % 60
     }
 
+    #[inline]
     pub fn nanosecond(&self) -> u32 {
         (self.fraction * 1_000_000_000.) as u32 % 1_000_000_000
     }
@@ -141,18 +147,21 @@ impl_fromstr_parse!(ApproxAnyTime, time_any_approx);
 impl Valid for HmsTime {
     /// Accepts leap seconds on any day
     /// since they are not predictable.
+    #[inline]
     fn is_valid(&self) -> bool {
         HmTime::from(self.clone()).is_valid() && self.second <= 60
     }
 }
 
 impl Valid for HmTime {
+    #[inline]
     fn is_valid(&self) -> bool {
         HTime::from(self.clone()).is_valid() && self.minute <= 59
     }
 }
 
 impl Valid for HTime {
+    #[inline]
     fn is_valid(&self) -> bool {
         self.hour <= 24
     }
@@ -162,6 +171,7 @@ impl<N> Valid for LocalTime<N>
 where
     N: NaiveTime + Valid,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         self.naive.is_valid() && self.fraction < 1.
     }
@@ -171,6 +181,7 @@ impl<N> Valid for GlobalTime<N>
 where
     N: NaiveTime + Valid,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         self.local.is_valid() && self.timezone > -24 * 60 && self.timezone < 24 * 60
     }
@@ -180,15 +191,50 @@ impl<N> Valid for AnyTime<N>
 where
     N: NaiveTime + Valid,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         match self {
-            AnyTime::Global(time) => time.is_valid(),
-            AnyTime::Local(time) => time.is_valid(),
+            Self::Global(time) => time.is_valid(),
+            Self::Local(time) => time.is_valid(),
+        }
+    }
+}
+
+impl Valid for ApproxLocalTime {
+    #[inline]
+    fn is_valid(&self) -> bool {
+        match self {
+            Self::HMS(time) => time.is_valid(),
+            Self::HM(time) => time.is_valid(),
+            Self::H(time) => time.is_valid(),
+        }
+    }
+}
+
+impl Valid for ApproxGlobalTime {
+    #[inline]
+    fn is_valid(&self) -> bool {
+        match self {
+            Self::HMS(time) => time.is_valid(),
+            Self::HM(time) => time.is_valid(),
+            Self::H(time) => time.is_valid(),
+        }
+    }
+}
+
+impl Valid for ApproxAnyTime {
+    #[inline]
+    fn is_valid(&self) -> bool {
+        match self {
+            Self::HMS(time) => time.is_valid(),
+            Self::HM(time) => time.is_valid(),
+            Self::H(time) => time.is_valid(),
         }
     }
 }
 
 impl From<HmsTime> for HmTime {
+    #[inline]
     fn from(t: HmsTime) -> Self {
         Self {
             hour: t.hour,
@@ -198,18 +244,21 @@ impl From<HmsTime> for HmTime {
 }
 
 impl From<HmsTime> for HTime {
+    #[inline]
     fn from(t: HmsTime) -> Self {
         Self { hour: t.hour }
     }
 }
 
 impl From<HmTime> for HTime {
+    #[inline]
     fn from(t: HmTime) -> Self {
         Self { hour: t.hour }
     }
 }
 
 impl From<LocalTime<HmsTime>> for LocalTime<HmTime> {
+    #[inline]
     fn from(t: LocalTime<HmsTime>) -> Self {
         Self {
             naive: HmTime {
@@ -222,6 +271,7 @@ impl From<LocalTime<HmsTime>> for LocalTime<HmTime> {
 }
 
 impl From<LocalTime<HmsTime>> for LocalTime<HTime> {
+    #[inline]
     fn from(t: LocalTime<HmsTime>) -> Self {
         Self {
             naive: HTime { hour: t.naive.hour },
@@ -231,6 +281,7 @@ impl From<LocalTime<HmsTime>> for LocalTime<HTime> {
 }
 
 impl From<LocalTime<HmTime>> for LocalTime<HTime> {
+    #[inline]
     fn from(t: LocalTime<HmTime>) -> Self {
         Self {
             naive: HTime { hour: t.naive.hour },
@@ -240,6 +291,7 @@ impl From<LocalTime<HmTime>> for LocalTime<HTime> {
 }
 
 impl From<GlobalTime<HmsTime>> for GlobalTime<HmTime> {
+    #[inline]
     fn from(t: GlobalTime<HmsTime>) -> Self {
         Self {
             local: LocalTime {
@@ -255,6 +307,7 @@ impl From<GlobalTime<HmsTime>> for GlobalTime<HmTime> {
 }
 
 impl From<GlobalTime<HmsTime>> for GlobalTime<HTime> {
+    #[inline]
     fn from(t: GlobalTime<HmsTime>) -> Self {
         Self {
             local: LocalTime {
@@ -269,6 +322,7 @@ impl From<GlobalTime<HmsTime>> for GlobalTime<HTime> {
 }
 
 impl From<GlobalTime<HmTime>> for GlobalTime<HTime> {
+    #[inline]
     fn from(t: GlobalTime<HmTime>) -> Self {
         Self {
             local: LocalTime {
@@ -283,6 +337,7 @@ impl From<GlobalTime<HmTime>> for GlobalTime<HTime> {
 }
 
 impl From<AnyTime<HmsTime>> for AnyTime<HmTime> {
+    #[inline]
     fn from(t: AnyTime<HmsTime>) -> Self {
         match t {
             AnyTime::Global(t) => AnyTime::Global(t.into()),
@@ -292,6 +347,7 @@ impl From<AnyTime<HmsTime>> for AnyTime<HmTime> {
 }
 
 impl From<AnyTime<HmsTime>> for AnyTime<HTime> {
+    #[inline]
     fn from(t: AnyTime<HmsTime>) -> Self {
         match t {
             AnyTime::Global(t) => AnyTime::Global(t.into()),
@@ -301,6 +357,7 @@ impl From<AnyTime<HmsTime>> for AnyTime<HTime> {
 }
 
 impl From<AnyTime<HmTime>> for AnyTime<HTime> {
+    #[inline]
     fn from(t: AnyTime<HmTime>) -> Self {
         match t {
             AnyTime::Global(t) => AnyTime::Global(t.into()),

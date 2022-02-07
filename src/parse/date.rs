@@ -10,47 +10,57 @@ use nom::{
     sequence::{pair, separated_pair, tuple},
 };
 
+#[inline]
 fn positive_century(i: &[u8]) -> ParseResult<u8> {
     map(take_while_m_n(2, 2, is_digit), buf_to_int)(i)
 }
 
+#[inline]
 fn century(i: &[u8]) -> ParseResult<i8> {
     map(pair(opt(sign), positive_century), |(sign, century)| {
         sign.unwrap_or(1) * century as i8
     })(i)
 }
 
+#[inline]
 // TODO support expanded year
 fn positive_year(i: &[u8]) -> ParseResult<u16> {
     map(take_while_m_n(4, 4, is_digit), buf_to_int)(i)
 }
 
+#[inline]
 fn year(i: &[u8]) -> ParseResult<i16> {
     map(pair(opt(sign), positive_year), |(sign, year)| {
         sign.unwrap_or(1) as i16 * year as i16
     })(i)
 }
 
+#[inline]
 fn month(i: &[u8]) -> ParseResult<u8> {
     map(take_while_m_n(2, 2, is_digit), buf_to_int)(i)
 }
 
+#[inline]
 fn day(i: &[u8]) -> ParseResult<u8> {
     map(take_while_m_n(2, 2, is_digit), buf_to_int)(i)
 }
 
+#[inline]
 fn year_week(i: &[u8]) -> ParseResult<u8> {
     map(take_while_m_n(2, 2, is_digit), buf_to_int)(i)
 }
 
-fn year_day(i: &[u8]) -> ParseResult<u8> {
+#[inline]
+fn year_day(i: &[u8]) -> ParseResult<u16> {
     map(take_while_m_n(3, 3, is_digit), buf_to_int)(i)
 }
 
+#[inline]
 fn week_day(i: &[u8]) -> ParseResult<u8> {
     map(take_while_m_n(1, 1, is_digit), buf_to_int)(i)
 }
 
+#[inline]
 fn date_ymd_format(i: &[u8], extended: bool) -> ParseResult<YmdDate> {
     map(
         tuple((
@@ -64,18 +74,22 @@ fn date_ymd_format(i: &[u8], extended: bool) -> ParseResult<YmdDate> {
     )(i)
 }
 
+#[inline]
 fn date_ymd_basic(i: &[u8]) -> ParseResult<YmdDate> {
     date_ymd_format(i, false)
 }
 
+#[inline]
 fn date_ymd_extended(i: &[u8]) -> ParseResult<YmdDate> {
     date_ymd_format(i, true)
 }
 
+#[inline]
 pub fn date_ymd(i: &[u8]) -> ParseResult<YmdDate> {
     alt((date_ymd_extended, date_ymd_basic))(i)
 }
 
+#[inline]
 fn date_wd_format(i: &[u8], extended: bool) -> ParseResult<WdDate> {
     map(
         tuple((
@@ -90,39 +104,45 @@ fn date_wd_format(i: &[u8], extended: bool) -> ParseResult<WdDate> {
     )(i)
 }
 
+#[inline]
 fn date_wd_basic(i: &[u8]) -> ParseResult<WdDate> {
     date_wd_format(i, false)
 }
 
+#[inline]
 fn date_wd_extended(i: &[u8]) -> ParseResult<WdDate> {
     date_wd_format(i, true)
 }
 
+#[inline]
 pub fn date_wd(i: &[u8]) -> ParseResult<WdDate> {
     alt((date_wd_extended, date_wd_basic))(i)
 }
 
+#[inline]
 fn date_o_format(i: &[u8], extended: bool) -> ParseResult<ODate> {
     map(
         separated_pair(year, cond(extended, char('-')), year_day),
-        |(year, day)| ODate {
-            year,
-            day: day.into(),
-        },
+        |(year, day)| ODate { year, day },
     )(i)
 }
 
+#[inline]
 fn date_o_basic(i: &[u8]) -> ParseResult<ODate> {
     date_o_format(i, false)
 }
+
+#[inline]
 fn date_o_extended(i: &[u8]) -> ParseResult<ODate> {
     date_o_format(i, true)
 }
 
+#[inline]
 pub fn date_o(i: &[u8]) -> ParseResult<ODate> {
     alt((date_o_extended, date_o_basic))(i)
 }
 
+#[inline]
 pub fn date(i: &[u8]) -> ParseResult<Date> {
     alt((
         complete(map(date_wd, Date::WD)),
@@ -131,6 +151,7 @@ pub fn date(i: &[u8]) -> ParseResult<Date> {
     ))(i)
 }
 
+#[inline]
 fn date_w_format(i: &[u8], extended: bool) -> ParseResult<WDate> {
     map(
         tuple((year, cond(extended, char('-')), char('W'), year_week)),
@@ -138,18 +159,22 @@ fn date_w_format(i: &[u8], extended: bool) -> ParseResult<WDate> {
     )(i)
 }
 
+#[inline]
 fn date_w_basic(i: &[u8]) -> ParseResult<WDate> {
     date_w_format(i, false)
 }
 
+#[inline]
 fn date_w_extended(i: &[u8]) -> ParseResult<WDate> {
     date_w_format(i, true)
 }
 
+#[inline]
 pub fn date_w(i: &[u8]) -> ParseResult<WDate> {
     alt((date_w_extended, date_w_basic))(i)
 }
 
+#[inline]
 fn date_ym_format(i: &[u8], extended: bool) -> ParseResult<YmDate> {
     map(
         separated_pair(year, cond(extended, char('-')), month),
@@ -157,26 +182,32 @@ fn date_ym_format(i: &[u8], extended: bool) -> ParseResult<YmDate> {
     )(i)
 }
 
+#[inline]
 fn date_ym_basic(i: &[u8]) -> ParseResult<YmDate> {
     date_ym_format(i, false)
 }
 
+#[inline]
 fn date_ym_extended(i: &[u8]) -> ParseResult<YmDate> {
     date_ym_format(i, true)
 }
 
+#[inline]
 pub fn date_ym(i: &[u8]) -> ParseResult<YmDate> {
     alt((date_ym_extended, date_ym_basic))(i)
 }
 
+#[inline]
 pub fn date_y(i: &[u8]) -> ParseResult<YDate> {
     map(year, |year| YDate { year })(i)
 }
 
+#[inline]
 pub fn date_c(i: &[u8]) -> ParseResult<CDate> {
     map(century, |century| CDate { century })(i)
 }
 
+#[inline]
 pub fn date_approx(i: &[u8]) -> ParseResult<ApproxDate> {
     alt((
         map(date, |x| x.into()),
@@ -359,12 +390,15 @@ mod tests {
 
     #[test]
     fn date_o() {
+        use crate::Valid;
+
         let value = ODate {
             year: 1985,
             day: 102,
         };
         assert_eq!(super::date_o(b"1985-102"), Ok((&[][..], value.clone())));
         assert_eq!(super::date_o(b"1985102"), Ok((&[][..], value)));
+        assert!(!super::date_o(b"2022-367").unwrap().1.is_valid());
     }
 
     #[test]

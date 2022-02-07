@@ -15,6 +15,7 @@ use nom_regex::bytes::re_match;
 
 macro_rules! datetime {
     (pub $name:ident, $date:ty, $date_parser:ident, $time:ty, $time_parser:ident) => {
+        #[inline]
         pub fn $name(i: &[u8]) -> ParseResult<DateTime<$date, $time>> {
             map(
                 tuple(($date_parser, char('T'), peek(not(char('T'))), $time_parser)),

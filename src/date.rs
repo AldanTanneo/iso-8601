@@ -96,6 +96,7 @@ impl<Y> Valid for Date<Y>
 where
     Y: Year + Clone,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         match self {
             Date::YMD(date) => date.is_valid(),
@@ -109,6 +110,7 @@ impl<Y> Valid for ApproxDate<Y>
 where
     Y: Year + Clone,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         match self {
             ApproxDate::YMD(date) => date.is_valid(),
@@ -126,6 +128,7 @@ impl<Y> Valid for YmdDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         self.day >= 1
             && self.day
@@ -148,6 +151,7 @@ impl<Y> Valid for YmDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         self.month >= 1 && self.month <= 12
     }
@@ -157,12 +161,14 @@ impl<Y> Valid for YDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         true
     }
 }
 
 impl Valid for CDate {
+    #[inline]
     fn is_valid(&self) -> bool {
         true
     }
@@ -172,6 +178,7 @@ impl<Y> Valid for WdDate<Y>
 where
     Y: Year + Clone,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         WDate::from(self.clone()).is_valid() && self.day >= 1 && self.day <= 7
     }
@@ -181,6 +188,7 @@ impl<Y> Valid for WDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         self.week >= 1 && self.week <= self.year.num_weeks()
     }
@@ -190,6 +198,7 @@ impl<Y> Valid for ODate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         self.day >= 1 && self.day <= self.year.num_days()
     }
@@ -199,6 +208,7 @@ pub trait Year {
     fn is_leap(&self) -> bool;
     fn num_weeks(&self) -> u8;
 
+    #[inline]
     fn num_days(&self) -> u16 {
         if self.is_leap() {
             366
@@ -226,11 +236,13 @@ macro_rules! impl_years {
 macro_rules! impl_year {
     ($ty:ty) => {
         impl Year for $ty {
+            #[inline]
             fn is_leap(&self) -> bool {
                 let factor = |x| self % x == 0;
                 factor(4) && (!factor(100) || factor(400))
             }
 
+            #[inline]
             fn num_weeks(&self) -> u8 {
                 // https://en.wikipedia.org/wiki/ISO_week_date#Weeks_per_year
                 let p = |x| (x + x / 4 - x / 100 + x / 400) % 7;
@@ -249,6 +261,7 @@ impl<Y> From<Date<Y>> for ApproxDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn from(date: Date<Y>) -> Self {
         match date {
             Date::YMD(date) => ApproxDate::YMD(date),
@@ -263,6 +276,7 @@ where
     Y: Year,
     ODate<Y>: From<WdDate<Y>>,
 {
+    #[inline]
     fn from(date: Date<Y>) -> Self {
         match date {
             Date::YMD(date) => date,
@@ -278,6 +292,7 @@ where
     WdDate<Y>: From<ODate<Y>>,
     ODate<Y>: From<WdDate<Y>>,
 {
+    #[inline]
     fn from(date: Date<Y>) -> Self {
         match date {
             Date::YMD(date) => date.into(),
@@ -292,6 +307,7 @@ where
     Y: Year,
     ODate<Y>: From<WdDate<Y>>,
 {
+    #[inline]
     fn from(date: Date<Y>) -> Self {
         match date {
             Date::YMD(date) => date.into(),
@@ -305,6 +321,7 @@ impl<Y> From<YmdDate<Y>> for YmDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn from(date: YmdDate<Y>) -> Self {
         Self {
             year: date.year,
@@ -317,6 +334,7 @@ impl<Y> From<YmdDate<Y>> for YDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn from(date: YmdDate<Y>) -> Self {
         Self { year: date.year }
     }
@@ -326,6 +344,7 @@ impl<Y> From<YmDate<Y>> for YDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn from(date: YmDate<Y>) -> Self {
         Self { year: date.year }
     }
@@ -335,6 +354,7 @@ impl<Y> From<WdDate<Y>> for WDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn from(date: WdDate<Y>) -> Self {
         Self {
             year: date.year,
@@ -348,6 +368,7 @@ where
     Y: Year,
     ODate<Y>: From<WdDate<Y>>,
 {
+    #[inline]
     fn from(date: WdDate<Y>) -> Self {
         ODate::from(date).into()
     }
@@ -357,6 +378,7 @@ impl<Y> From<ODate<Y>> for YmdDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn from(date: ODate<Y>) -> Self {
         let leap = date.year.is_leap();
         let (month, day) = match date.day {
@@ -399,6 +421,7 @@ where
     Y: Year,
     YmdDate<Y>: From<WdDate<Y>>,
 {
+    #[inline]
     fn from(date: WdDate<Y>) -> Self {
         YmdDate::from(date).into()
     }
@@ -408,6 +431,7 @@ impl<Y> From<ODate<Y>> for YmDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn from(date: ODate<Y>) -> Self {
         YmdDate::from(date).into()
     }
@@ -418,6 +442,7 @@ where
     Y: Year,
     YmdDate<Y>: From<WdDate<Y>>,
 {
+    #[inline]
     fn from(date: WdDate<Y>) -> Self {
         YmdDate::from(date).into()
     }
@@ -427,6 +452,7 @@ impl<Y> From<ODate<Y>> for YDate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn from(date: ODate<Y>) -> Self {
         Self { year: date.year }
     }
@@ -439,6 +465,7 @@ where
     ODate<Y>: From<WdDate<Y>>,
     WdDate<Y>: From<ODate<Y>>,
 {
+    #[inline]
     fn from(date: YmdDate<Y>) -> Self {
         ODate::from(date).into()
     }
@@ -447,6 +474,7 @@ where
 macro_rules! impl_wd_from_o {
     ($ty:ty) => {
         impl From<ODate<$ty>> for WdDate<$ty> {
+            #[inline]
             fn from(date: ODate<$ty>) -> Self {
                 // https://en.wikipedia.org/wiki/ISO_week_date#Calculating_the_week_number_of_a_given_date
                 let y = date.year % 100 % 28;
@@ -471,6 +499,7 @@ impl<Y> From<YmdDate<Y>> for ODate<Y>
 where
     Y: Year,
 {
+    #[inline]
     fn from(date: YmdDate<Y>) -> Self {
         let leap = date.year.is_leap();
         Self {
@@ -507,10 +536,13 @@ where
 macro_rules! impl_o_from_wd {
     ($ty:ty) => {
         impl From<WdDate<$ty>> for ODate<$ty> {
+            #[inline]
             fn from(date: WdDate<$ty>) -> Self {
                 // https://en.wikipedia.org/wiki/ISO_week_date#Calculating_a_date_given_the_year,_week_number_and_weekday
 
+                #[inline]
                 fn weekday_jan4(year: $ty) -> u8 {
+                    #[inline]
                     fn weekday_jan1(year: $ty) -> u8 {
                         // https://en.wikipedia.org/wiki/Determination_of_the_day_of_the_week#Gauss's_algorithm
                         let y = year - 1;

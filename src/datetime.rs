@@ -40,6 +40,7 @@ where
     D: Datelike + Valid,
     T: Timelike + Valid,
 {
+    #[inline]
     fn is_valid(&self) -> bool {
         self.date.is_valid() && self.time.is_valid()
     }
@@ -54,6 +55,21 @@ where
     Date(D),
     Time(T),
     DateTime(DateTime<D, T>),
+}
+
+impl<D, T> Valid for PartialDateTime<D, T>
+where
+    D: Datelike + Valid,
+    T: Timelike + Valid,
+{
+    #[inline]
+    fn is_valid(&self) -> bool {
+        match self {
+            Self::Date(date) => date.is_valid(),
+            Self::Time(time) => time.is_valid(),
+            Self::DateTime(datetime) => datetime.is_valid(),
+        }
+    }
 }
 
 impl_fromstr_parse!(PartialDateTime<ApproxDate, ApproxAnyTime>, partial_datetime_approx_any_approx);

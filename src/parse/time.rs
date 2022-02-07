@@ -9,18 +9,22 @@ use nom::{
     sequence::{pair, preceded, separated_pair, tuple},
 };
 
+#[inline]
 fn hour(i: &[u8]) -> ParseResult<u8> {
     map(take_while_m_n(2, 2, is_digit), buf_to_int)(i)
 }
 
+#[inline]
 fn minute(i: &[u8]) -> ParseResult<u8> {
     map(take_while_m_n(2, 2, is_digit), buf_to_int)(i)
 }
 
+#[inline]
 fn second(i: &[u8]) -> ParseResult<u8> {
     map(take_while_m_n(2, 2, is_digit), buf_to_int)(i)
 }
 
+#[inline]
 fn time_hms_format(i: &[u8], extended: bool) -> ParseResult<HmsTime> {
     map(
         tuple((
@@ -38,18 +42,22 @@ fn time_hms_format(i: &[u8], extended: bool) -> ParseResult<HmsTime> {
     )(i)
 }
 
+#[inline]
 fn time_hms_basic(i: &[u8]) -> ParseResult<HmsTime> {
     time_hms_format(i, false)
 }
 
+#[inline]
 fn time_hms_extended(i: &[u8]) -> ParseResult<HmsTime> {
     time_hms_format(i, true)
 }
 
+#[inline]
 pub fn time_hms(i: &[u8]) -> ParseResult<HmsTime> {
     alt((time_hms_extended, time_hms_basic))(i)
 }
 
+#[inline]
 fn time_hm_format(i: &[u8], extended: bool) -> ParseResult<HmTime> {
     map(
         separated_pair(hour, cond(extended, char(':')), minute),
@@ -57,22 +65,27 @@ fn time_hm_format(i: &[u8], extended: bool) -> ParseResult<HmTime> {
     )(i)
 }
 
+#[inline]
 fn time_hm_basic(i: &[u8]) -> ParseResult<HmTime> {
     time_hm_format(i, false)
 }
 
+#[inline]
 fn time_hm_extended(i: &[u8]) -> ParseResult<HmTime> {
     time_hm_format(i, true)
 }
 
+#[inline]
 pub fn time_hm(i: &[u8]) -> ParseResult<HmTime> {
     alt((time_hm_extended, time_hm_basic))(i)
 }
 
+#[inline]
 pub fn time_h(i: &[u8]) -> ParseResult<HTime> {
     map(hour, |hour| HTime { hour })(i)
 }
 
+#[inline]
 fn time_naive_approx(i: &[u8]) -> ParseResult<ApproxNaiveTime> {
     alt((
         complete(map(time_hms, ApproxNaiveTime::HMS)),
@@ -81,6 +94,7 @@ fn time_naive_approx(i: &[u8]) -> ParseResult<ApproxNaiveTime> {
     ))(i)
 }
 
+#[inline]
 pub fn time_local_approx(i: &[u8]) -> ParseResult<ApproxLocalTime> {
     map(
         pair(time_naive_approx, opt(complete(frac32))),
@@ -101,6 +115,7 @@ pub fn time_local_approx(i: &[u8]) -> ParseResult<ApproxLocalTime> {
     )(i)
 }
 
+#[inline]
 pub fn time_global_approx(i: &[u8]) -> ParseResult<ApproxGlobalTime> {
     map(
         pair(time_local_approx, timezone),
@@ -112,6 +127,7 @@ pub fn time_global_approx(i: &[u8]) -> ParseResult<ApproxGlobalTime> {
     )(i)
 }
 
+#[inline]
 pub fn time_any_approx(i: &[u8]) -> ParseResult<ApproxAnyTime> {
     alt((
         map(time_any_hms, ApproxAnyTime::HMS),
@@ -122,6 +138,7 @@ pub fn time_any_approx(i: &[u8]) -> ParseResult<ApproxAnyTime> {
 
 macro_rules! time_local_accuracy {
     (pub $name:ident, $naive:ty, $naive_submac:ident) => {
+        #[inline]
         pub fn $name(i: &[u8]) -> ParseResult<LocalTime<$naive>> {
             map(
                 tuple((opt(char('T')), $naive_submac, opt(complete(frac32)))),
@@ -140,6 +157,7 @@ time_local_accuracy!(pub time_local_h,   HTime,   time_h);
 
 macro_rules! time_global_accuracy {
     (pub $name:ident, $naive:ty, $local_submac:ident) => {
+        #[inline]
         pub fn $name(i: &[u8]) -> ParseResult<GlobalTime<$naive>> {
             map(
                 pair($local_submac, complete(timezone)),
@@ -154,6 +172,7 @@ time_global_accuracy!(pub time_global_h,   HTime,   time_local_h);
 
 macro_rules! time_any_accuracy {
     (pub $name:ident, $naive:ty, $local_submac:ident, $global_submac:ident) => {
+        #[inline]
         pub fn $name(i: &[u8]) -> ParseResult<AnyTime<$naive>> {
             alt((
                 complete(map($global_submac, AnyTime::Global)),
@@ -166,10 +185,12 @@ time_any_accuracy!(pub time_any_hms, HmsTime, time_local_hms, time_global_hms);
 time_any_accuracy!(pub time_any_hm,  HmTime,  time_local_hm,  time_global_hm);
 time_any_accuracy!(pub time_any_h,   HTime,   time_local_h,   time_global_h);
 
+#[inline]
 fn timezone_utc(i: &[u8]) -> ParseResult<i16> {
     map(char('Z'), |_| 0)(i)
 }
 
+#[inline]
 fn timezone_fixed(i: &[u8]) -> ParseResult<i16> {
     map(
         tuple((sign, hour, opt(complete(preceded(opt(char(':')), minute))))),
@@ -177,6 +198,7 @@ fn timezone_fixed(i: &[u8]) -> ParseResult<i16> {
     )(i)
 }
 
+#[inline]
 fn timezone(i: &[u8]) -> ParseResult<i16> {
     alt((timezone_utc, timezone_fixed))(i)
 }
